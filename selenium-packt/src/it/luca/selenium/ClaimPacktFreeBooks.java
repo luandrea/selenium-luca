@@ -3,6 +3,8 @@ package it.luca.selenium;
 import java.util.List;
 import java.util.Properties;
 
+import javax.mail.internet.MimeMessage;
+
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
@@ -16,6 +18,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.google.api.services.gmail.Gmail;
 import com.thoughtworks.selenium.Selenium;
 import com.thoughtworks.selenium.webdriven.WebDriverBackedSelenium;
 
@@ -31,18 +34,13 @@ public class ClaimPacktFreeBooks {
 	
 	// Recipient's email
 	private static final String to = "email@email.com";
-	private static final String to2 = "email@email.com";
-
-	// Assuming you are sending email from localhost
-	String host = "localhost";	
-
-	// Email login
-	private static final String emailLogin = "email@";
-	private static final String emailPassword = "pawd";
 	
 	// Packt login
 	private static final String packtLogin = "email@";
 	private static final String packtPassword = "pawd";
+	
+	private static final String chromeDriverPath = 
+			"C:\\Users\\lucaa\\Documents\\selenium\\selenium-luca\\selenium-packt\\driver\\chromedriver.exe";
 
 	static Properties mailServerProperties;
 
@@ -54,8 +52,7 @@ public class ClaimPacktFreeBooks {
 
 	@Before
 	public void setUp() throws Exception {
-		System.setProperty("webdriver.chrome.driver",
-				"C:\\Users\\lucaa\\Documents\\selenium\\selenium-luca\\selenium-packt\\driver\\chromedriver.exe");
+		System.setProperty("webdriver.chrome.driver", chromeDriverPath);
 		driver = new ChromeDriver();
 
 		// driver = new FirefoxDriver();
@@ -81,7 +78,7 @@ public class ClaimPacktFreeBooks {
 				login();
 
 			// click claim button
-			selenium.click("//div[@id='deal-of-the-day']/div/div/div[2]/div[4]/div[2]/a/div/input");
+			selenium.click("//a/div/input");
 			selenium.waitForPageToLoad("30000");
 
 			List<WebElement> productList = driver.findElements(By.cssSelector("#product-account-list > div"));
@@ -99,9 +96,19 @@ public class ClaimPacktFreeBooks {
 
 			log.info(bookList);
 			
-//			// send email
-//			sendEmail("Book '" + bookTitle + "' claimed succesfully!", "Dear Master,\n I have claimed the book '"
-//					+ bookTitle + "' succesfully! \n\n"+bookList+"\n\nSincerely,\nyour Raspberry.");
+			// send email
+			String emaiTitle = "Book '" + bookTitle + "' claimed succesfully!";
+			String emaiBody = "Dear Master,\n I have claimed the book '"
+					+ bookTitle + "' succesfully! \n\n"+bookList+"\n\nSincerely,\nyour Raspberry.";
+			
+			Gmail service = GmailQuickstart.getGmailService();
+			try {
+				MimeMessage emailContent = GmailQuickstart.createEmail(to, from, emaiTitle, emaiBody);
+				GmailQuickstart.sendMessage(service, "me", emailContent);
+			
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
 		} catch (Exception e) {
 			log.error("Cannot claim book!");
